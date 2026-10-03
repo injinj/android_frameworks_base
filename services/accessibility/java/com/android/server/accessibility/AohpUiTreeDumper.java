@@ -42,8 +42,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class AohpUiTreeDumper {
     private static final String TAG = "AohpUiTree";
 
-    /** AOHP AgentDriver benchmark overlay — excluded from privileged UI tree dumps. */
-    private static final String AOHP_AGENT_DRIVER_PACKAGE = "org.aohp.agentdriver";
+    /**
+     * AOHP agent-bridge apps whose non-application windows (benchmark / status overlays) are
+     * excluded from privileged UI tree dumps: the stock AOHPAgentDriver demo app and the AOHP
+     * Driver that replaces it. Nothing else in the a11y hooks is package-specific; ui.tree works
+     * for any caller as long as some AccessibilityService is enabled.
+     */
+    private static final String[] AOHP_AGENT_PACKAGES = {
+            "org.aohp.agentdriver",
+            "org.aohp.driver",
+    };
     private static final String AOHP_AGENT_OVERLAY_TITLE = "AOHP_AGENT_OVERLAY";
 
     public static final int FLAG_FILTER_DECORATIVE = 0x1;
@@ -1186,7 +1194,13 @@ public final class AohpUiTreeDumper {
         if (rootLike == null || rootLike.getPackageName() == null) {
             return false;
         }
-        return AOHP_AGENT_DRIVER_PACKAGE.contentEquals(rootLike.getPackageName());
+        CharSequence pkg = rootLike.getPackageName();
+        for (String agentPkg : AOHP_AGENT_PACKAGES) {
+            if (agentPkg.contentEquals(pkg)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static String windowTypeToString(int type) {
