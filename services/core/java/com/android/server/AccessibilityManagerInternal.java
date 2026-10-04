@@ -62,6 +62,37 @@ public abstract class AccessibilityManagerInternal {
      */
     public abstract boolean isTouchExplorationEnabled(@UserIdInt int userId);
 
+    /**
+     * AOHP: dump full UI tree for any logical display (bypasses accessibility-service filtering).
+     * Called from {@code system_server} only; permission must be enforced by the caller (e.g.
+     * {@code MANAGE_AOHP_VIRTUAL_DISPLAY}).
+     *
+     * @param displayId logical display id (default or virtual)
+     * @param flags AOHP-specific bitmask (see {@code AohpUiTreeDumper} in accessibility service)
+     * @return JSON object string with {@code displayId}, {@code windows}, {@code nodes}, {@code stats}
+     */
+    public abstract String dumpUiTreeForDisplay(int displayId, int flags);
+
+    /**
+     * AOHP: perform the native set-progress accessibility action for a range/slider node addressed
+     * by the temporary {@code id} from {@link #dumpUiTreeForDisplay}.
+     */
+    public abstract String setNodeProgressForDisplay(int displayId, int nodeId, float percent,
+            int flags);
+
+    /**
+     * AOHP: clear text via {@code ACTION_SET_TEXT} (empty). See {@link #dumpUiTreeForDisplay} for
+     * {@code nodeId}; use {@code nodeId <= 0} for the focused editable.
+     */
+    public abstract String clearEditableTextForDisplay(int displayId, int nodeId, int flags);
+
+    /**
+     * AOHP: set text via {@code ACTION_SET_TEXT}. See {@link #dumpUiTreeForDisplay} for
+     * {@code nodeId}; use {@code nodeId <= 0} for the focused editable.
+     */
+    public abstract String setEditableTextForDisplay(int displayId, int nodeId, String text,
+            int flags);
+
     private static final AccessibilityManagerInternal NOP = new AccessibilityManagerInternal() {
         @Override
         public void setImeSessionEnabled(SparseArray<IAccessibilityInputMethodSession> sessions,
@@ -92,6 +123,27 @@ public abstract class AccessibilityManagerInternal {
 
         @Override
         public void performSystemAction(int actionId) {
+        }
+
+        @Override
+        public String dumpUiTreeForDisplay(int displayId, int flags) {
+            return "{}";
+        }
+
+        @Override
+        public String setNodeProgressForDisplay(int displayId, int nodeId, float percent,
+                int flags) {
+            return "{\"success\":false,\"error\":\"accessibility_manager_unavailable\"}";
+        }
+
+        @Override
+        public String clearEditableTextForDisplay(int displayId, int nodeId, int flags) {
+            return "{\"success\":false,\"error\":\"accessibility_manager_unavailable\"}";
+        }
+
+        @Override
+        public String setEditableTextForDisplay(int displayId, int nodeId, String text, int flags) {
+            return "{\"success\":false,\"error\":\"accessibility_manager_unavailable\"}";
         }
     };
 

@@ -125,6 +125,18 @@ import com.android.server.accessibility.AccessibilityManagerService;
 import com.android.server.accounts.AccountManagerService;
 import com.android.server.adb.AdbService;
 import com.android.server.alarm.AlarmManagerService;
+import com.android.server.aohp.AohpAdService;
+import com.android.server.aohp.AohpAgentViewService;
+import com.android.server.aohp.AohpContainerService;
+import com.android.server.aohp.AohpEventStreamService;
+import com.android.server.aohp.AohpFileBridgeService;
+import com.android.server.aohp.AohpSecurityAuditLog;
+import com.android.server.aohp.AohpSecurityBridgeService;
+import com.android.server.aohp.AohpSecurityShellBinder;
+import com.android.server.aohp.AohpSensitivityRegistryService;
+import com.android.server.aohp.AohpTaintTrackerService;
+import com.android.server.aohp.AohpVaultService;
+import com.android.server.aohp.AohpVirtualDisplayService;
 import com.android.server.am.ActivityManagerService;
 import com.android.server.ambientcontext.AmbientContextManagerService;
 import com.android.server.app.GameManagerService;
@@ -1765,6 +1777,64 @@ public final class SystemServer implements Dumpable {
             // TODO: Use service dependencies instead.
             t.traceBegin("DisplayManagerWindowManagerAndInputReady");
             mDisplayManagerService.windowManagerAndInputReady();
+            t.traceEnd();
+
+            t.traceBegin("StartAohpSecurityServices");
+            AohpSecurityAuditLog aohpSecurityAuditLog = new AohpSecurityAuditLog();
+            AohpVaultService aohpVaultService = new AohpVaultService(context);
+            ServiceManager.addService(AohpVaultService.SERVICE_NAME, aohpVaultService);
+            AohpTaintTrackerService aohpTaintTrackerService =
+                    new AohpTaintTrackerService(context);
+            ServiceManager.addService(AohpTaintTrackerService.SERVICE_NAME, aohpTaintTrackerService);
+            AohpSensitivityRegistryService aohpSensitivityRegistryService =
+                    new AohpSensitivityRegistryService(context);
+            ServiceManager.addService(
+                    AohpSensitivityRegistryService.SERVICE_NAME,
+                    aohpSensitivityRegistryService);
+            AohpSecurityBridgeService aohpSecurityBridgeService =
+                    new AohpSecurityBridgeService(
+                            context,
+                            aohpVaultService,
+                            aohpTaintTrackerService,
+                            aohpSensitivityRegistryService,
+                            aohpSecurityAuditLog);
+            ServiceManager.addService(
+                    AohpSecurityBridgeService.SERVICE_NAME, aohpSecurityBridgeService);
+            ServiceManager.addService(AohpSecurityShellBinder.SERVICE_NAME,
+                    new AohpSecurityShellBinder(aohpSecurityBridgeService, aohpSecurityAuditLog,
+                            aohpSensitivityRegistryService, aohpTaintTrackerService));
+            t.traceEnd();
+
+            t.traceBegin("StartAohpVirtualDisplayService");
+            ServiceManager.addService(AohpVirtualDisplayService.SERVICE_NAME,
+                    new AohpVirtualDisplayService(context, inputManager,
+                            mActivityManagerService.mActivityTaskManager));
+            t.traceEnd();
+
+            t.traceBegin("StartAohpContainerService");
+            ServiceManager.addService(AohpContainerService.SERVICE_NAME,
+                    new AohpContainerService(context));
+            t.traceEnd();
+
+            t.traceBegin("StartAohpAgentViewService");
+            ServiceManager.addService(AohpAgentViewService.SERVICE_NAME,
+                    new AohpAgentViewService(context));
+            t.traceEnd();
+
+            t.traceBegin("StartAohpFileBridgeService");
+            ServiceManager.addService(AohpFileBridgeService.SERVICE_NAME,
+                    new AohpFileBridgeService(context));
+            t.traceEnd();
+
+            t.traceBegin("StartAohpEventStreamService");
+            ServiceManager.addService(AohpEventStreamService.SERVICE_NAME,
+                    new AohpEventStreamService(context,
+                            mActivityManagerService.mActivityTaskManager));
+            t.traceEnd();
+
+            t.traceBegin("StartAohpAdService");
+            ServiceManager.addService(AohpAdService.SERVICE_NAME,
+                    new AohpAdService(context));
             t.traceEnd();
 
             if (mFactoryTestMode == FactoryTest.FACTORY_TEST_LOW_LEVEL) {

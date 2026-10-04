@@ -18,6 +18,7 @@ package android.hardware.display;
 
 import android.annotation.FloatRange;
 import android.annotation.IntDef;
+import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.companion.virtual.IVirtualDevice;
 import android.graphics.Point;
@@ -71,6 +72,12 @@ public abstract class DisplayManagerInternal {
     public abstract int createVirtualDisplay(VirtualDisplayConfig config,
             IVirtualDisplayCallback callback, IVirtualDevice virtualDevice,
             DisplayWindowPolicyController dwpc, String packageName, int ownerUid);
+
+    /**
+     * Releases a virtual display previously created via {@link #createVirtualDisplay}.
+     * @hide
+     */
+    public abstract void releaseVirtualDisplay(@NonNull IVirtualDisplayCallback callback);
 
     /**
      * Called by the power manager to request a new power state.
@@ -159,6 +166,14 @@ public abstract class DisplayManagerInternal {
      * returned object must be treated as immutable.
      */
     public abstract DisplayInfo getDisplayInfo(int displayId);
+
+    /**
+     * Returns the ids of all logical displays known to DisplayManager, without applying
+     * per-uid {@link DisplayInfo#hasAccess} filtering. For system diagnostics (e.g. AOHP)
+     * only.
+     * @hide
+     */
+    public abstract int[] getAllLogicalDisplayIds();
 
     /**
      * Returns a set of DisplayInfo, for the states that may be assumed by either the given display,

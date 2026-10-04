@@ -5873,6 +5873,19 @@ public final class DisplayManagerService extends SystemService {
         }
 
         @Override
+        public void releaseVirtualDisplay(IVirtualDisplayCallback callback) {
+            if (callback == null) {
+                return;
+            }
+            final long token = Binder.clearCallingIdentity();
+            try {
+                releaseVirtualDisplayInternal(callback.asBinder());
+            } finally {
+                Binder.restoreCallingIdentity(token);
+            }
+        }
+
+        @Override
         public void setScreenBrightnessOverrideFromWindowManager(
                 SparseArray<DisplayBrightnessOverrideRequest> brightnessOverrides) {
             SparseArray<DisplayPowerController> dpcs = new SparseArray<>();
@@ -5971,6 +5984,13 @@ public final class DisplayManagerService extends SystemService {
         @Override
         public DisplayInfo getDisplayInfo(int displayId) {
             return getDisplayInfoInternal(displayId, Process.myUid());
+        }
+
+        @Override
+        public int[] getAllLogicalDisplayIds() {
+            synchronized (mSyncRoot) {
+                return mLogicalDisplayMapper.getAllDisplayIdsLocked();
+            }
         }
 
         @Override
