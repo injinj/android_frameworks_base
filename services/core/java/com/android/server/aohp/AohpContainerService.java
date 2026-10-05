@@ -344,4 +344,35 @@ public final class AohpContainerService extends IAohpContainer.Stub {
             Binder.restoreCallingIdentity(ident);
         }
     }
+
+    @Override
+    public String unitControl(String containerName, String op, String jsonArgs) {
+        enforcePermission();
+        final long ident = Binder.clearCallingIdentity();
+        try {
+            if (containerName == null || containerName.isEmpty() || containerName.indexOf(' ') >= 0
+                    || op == null || op.isEmpty() || op.indexOf(' ') >= 0) {
+                return unitError("invalid container or op");
+            }
+            String args = (jsonArgs == null || jsonArgs.isEmpty()) ? "{}" : jsonArgs;
+            String b64 = Base64.encodeToString(args.getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP);
+            String resp = sendCommand("UNIT " + containerName + " " + op + " " + b64);
+            if (isOk(resp)) {
+                return okPayload(resp);
+            }
+            if (resp != null && resp.startsWith("ERR ")) {
+                return unitError(resp.substring(4).trim());
+            }
+            return unitError(resp != null ? resp : "no response");
+        } catch (IOException e) {
+            Log.e(TAG, "unitControl failed", e);
+            return unitError(e.getMessage() != null ? e.getMessage() : "IOException");
+        } finally {
+            Binder.restoreCallingIdentity(ident);
+        }
+    }
+
+    private static String unitError(String msg) {
+        return "{\"error\":true,\"message\":\"" + msg.replace("\\", "\\\\").replace("\"", "\\\"") + "\"}";
+    }
 }
